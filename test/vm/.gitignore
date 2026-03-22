@@ -1,0 +1,6 @@
+# Generated files
+images/
+.vm.pid
+
+# SSH keys (generated per environment)
+.ssh/

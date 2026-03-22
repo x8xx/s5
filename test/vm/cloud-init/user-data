@@ -1,0 +1,86 @@
+#cloud-config
+
+# User configuration
+users:
+  - name: s5
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOfoR4ovoxCVJdjW7YJ6t7aJXLSc9T6isOGdZhrXoMsP s5-test-vm
+
+# Set password for s5 user (password: s5)
+chpasswd:
+  expire: false
+  users:
+    - name: s5
+      password: s5
+      type: text
+
+# SSH configuration - enable password auth
+ssh_pwauth: true
+
+# Hostname
+hostname: s5-test
+
+# Package installation
+package_update: true
+package_upgrade: false
+
+packages:
+  # Build essentials
+  - build-essential
+  - pkg-config
+  - cmake
+  - ninja-build
+  - meson
+  - python3-pyelftools
+  # DPDK dependencies
+  - libnuma-dev
+  - libpcap-dev
+  - libelf-dev
+  # Rust
+  - curl
+  # Go
+  - golang-go
+  # Utilities
+  - git
+  - vim
+  - htop
+  - net-tools
+  - iproute2
+  - pciutils
+
+# Run commands after boot
+runcmd:
+  # Ensure password auth is enabled in sshd
+  - sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  - sed -i 's/^#*KbdInteractiveAuthentication.*/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
+  - systemctl restart ssh
+  # Install Rust
+  - sudo -u s5 bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+  # Configure hugepages (2MB pages)
+  - echo 1024 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+  - mkdir -p /dev/hugepages
+  - mount -t hugetlbfs nodev /dev/hugepages || true
+  # Add hugepages to fstab for persistence
+  - echo "hugetlbfs /dev/hugepages hugetlbfs defaults 0 0" >> /etc/fstab
+  # Setup complete marker
+  - touch /home/s5/.cloud-init-complete
+  - chown s5:s5 /home/s5/.cloud-init-complete
+
+# Write files
+write_files:
+  - path: /etc/sysctl.d/99-hugepages.conf
+    content: |
+      vm.nr_hugepages = 1024
+    permissions: '0644'
+  - path: /home/s5/.bash_profile
+    content: |
+      source ~/.bashrc
+      export PATH="$HOME/.cargo/bin:$PATH"
+    permissions: '0644'
+    owner: s5:s5
+
+# Final message
+final_message: "S5 test VM is ready! Boot time: $UPTIME seconds"
