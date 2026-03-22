@@ -1,5 +1,7 @@
+#[cfg(target_os = "linux")]
 use nix::sys::socket::{bind, socket, AddressFamily, LinkAddr, SockFlag, SockType, SockaddrLike};
 use std::ffi::CString;
+#[cfg(target_os = "linux")]
 use std::os::fd::{AsRawFd, OwnedFd};
 
 pub fn get_interface_index(name: &str) -> i32 {
@@ -13,6 +15,7 @@ pub fn get_interface_index(name: &str) -> i32 {
     }
 }
 
+#[cfg(target_os = "linux")]
 pub fn create_raw_socket() -> OwnedFd {
     socket(
         AddressFamily::Packet,
@@ -23,6 +26,7 @@ pub fn create_raw_socket() -> OwnedFd {
     .expect("Failed to create raw socket")
 }
 
+#[cfg(target_os = "linux")]
 pub fn bind_to_interface(fd: &OwnedFd, if_index: i32) {
     let mut addr_storage: libc::sockaddr_ll = unsafe { std::mem::zeroed() };
     addr_storage.sll_family = libc::AF_PACKET as u16;

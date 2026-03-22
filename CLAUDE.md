@@ -95,9 +95,31 @@ sudo bash /path/to/scripts/setup-dpdk.sh
 | ツール | 説明 |
 |--------|------|
 | `test/e_pktgen/` | L2フレーム送受信ツール |
+| `test/simple_switch/` | WASM parserサンプル実装 |
 | `test/scripts/` | 自動テストスクリプト |
 
-### VM上でのテスト実行
+### デプロイ&テスト (推奨)
+
+ホストマシンからワンコマンドでビルド・デプロイ・テスト実行:
+
+```bash
+cd test/scripts
+
+# 全テスト実行
+./deploy-and-test.sh
+
+# 特定テストのみ実行
+./deploy-and-test.sh 0001
+./deploy-and-test.sh 0002
+```
+
+このスクリプトは以下を自動実行:
+1. WASM parserをローカルでビルド
+2. ソースコードをVMにデプロイ
+3. VM内でdplane/e_pktgenをビルド (CARGO_BUILD_JOBS=1でOOM回避)
+4. テストスクリプトを実行
+
+### VM上での手動テスト実行
 
 ```bash
 # VM内でビルド
@@ -107,7 +129,8 @@ cd ~/e_pktgen && cargo build
 # テストスクリプト実行
 sudo DPLANE_BIN=~/dplane/target/debug/s5-dplane \
      PKTGEN_BIN=~/e_pktgen/target/debug/e_pktgen \
-     bash ~/0001_veth_forwarding.sh
+     PARSER_WASM=~/parser.wasm \
+     bash ~/scripts/0001_veth_forwarding.sh
 ```
 
 ### テストスクリプト一覧
@@ -115,3 +138,5 @@ sudo DPLANE_BIN=~/dplane/target/debug/s5-dplane \
 | スクリプト | 説明 |
 |-----------|------|
 | `0001_veth_forwarding.sh` | vethペアを使用した基本パケット転送テスト |
+| `0002_parser_test.sh` | WASM parserによるEthernetフレームフィルタリングテスト |
+| `deploy-and-test.sh` | ホストからVM へのデプロイ&テスト自動化スクリプト |

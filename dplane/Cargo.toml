@@ -7,3 +7,4 @@ edition = "2024"
 clap = { version = "4", features = ["derive"] }
 nix = { version = "0.29", features = ["net", "ioctl"] }
 libc = "0.2"
+wasmer = "2.3.0"
