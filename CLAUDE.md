@@ -87,3 +87,31 @@ make clean      # VMイメージ削除
 # VM内で実行
 sudo bash /path/to/scripts/setup-dpdk.sh
 ```
+
+## テスト
+
+### テストツール
+
+| ツール | 説明 |
+|--------|------|
+| `test/e_pktgen/` | L2フレーム送受信ツール |
+| `test/scripts/` | 自動テストスクリプト |
+
+### VM上でのテスト実行
+
+```bash
+# VM内でビルド
+cd ~/dplane && cargo build
+cd ~/e_pktgen && cargo build
+
+# テストスクリプト実行
+sudo DPLANE_BIN=~/dplane/target/debug/s5-dplane \
+     PKTGEN_BIN=~/e_pktgen/target/debug/e_pktgen \
+     bash ~/0001_veth_forwarding.sh
+```
+
+### テストスクリプト一覧
+
+| スクリプト | 説明 |
+|-----------|------|
+| `0001_veth_forwarding.sh` | vethペアを使用した基本パケット転送テスト |
