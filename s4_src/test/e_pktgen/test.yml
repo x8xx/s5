@@ -1,0 +1,4 @@
+general:
+  interface: 0000:04:00.0
+  tap: test1
+  execution_time: 5
