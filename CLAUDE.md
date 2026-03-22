@@ -2,6 +2,15 @@
 
 S4 (Super Speed Software Switch) の後継プロジェクト
 
+## データプレーン (dplane)
+
+```bash
+cd dplane
+cargo run      # 実行
+cargo build    # ビルド
+cargo test     # テスト
+```
+
 ## 参考ドキュメント
 
 ### s4_docs/
