@@ -26,21 +26,21 @@ mod to_cpu;           // CPU送信 (未使用)
 2. **キャッシュ初期化**
    - L1キャッシュ (インターフェースごと)
    - L2キャッシュ (インターフェース×キャッシュコア)
-   - LBF
-   - L3 TupleSpace
+   - LBF (インターフェースごと)
+   - L3 TupleSpace (初期化のみ、検索は無効化)
 
 3. **リング初期化**
-   - RX→Cache
-   - RX/Cache→Pipeline
-   - Pipeline→TX
-   - Pipeline→CacheCreator
+   - RX→Cache (cache_ring_list)
+   - RX/Cache→Pipeline (pipeline_ring_from_rx_list)
+   - Pipeline→TX (tx_ring_list)
+   - Pipeline→CacheCreater (cache_creater_ring)
 
 4. **ワーカー起動**
    - Pipeline Workers
    - Cache Workers
    - TX Workers
    - RX Workers
-   - Cache Creator
+   - Cache Creater
 
 5. **TCPサーバー起動**
    - コントロールプレーン接続受付

@@ -24,15 +24,37 @@ pub mod tss;    // Tuple Space Search (L3)
 - LBF (Load Balancer Filter) で分散
 - サイズ: 設定可能 (デフォルト65536)
 
-### L3 Cache (TSS)
+### LBF (Load Balancer Filter)
+- インターフェースごとに独立
+- L2キャッシュの存在を示すビットフラグ
+- L2ハッシュをインデックスとして使用
+- キャッシュコアIDをビットマップで管理
+
+### L3 Cache (TSS) - 現在無効化
 - Tuple Space Search
 - フィールド範囲によるタプル分類
 - 共有キャッシュ (全ワーカー)
+- **注意**: 現在コードがコメントアウトされており無効化されている
 
 ## キャッシュヒット率の最適化
 1. L1: ヘッダー完全一致 (高速、低ヒット率)
 2. L2: フィールド抽出一致 (中速、中ヒット率)
-3. L3: タプルスペース検索 (低速、高ヒット率)
+3. L3: タプルスペース検索 (低速、高ヒット率) - 現在無効化
+
+## キャッシュ検索フロー
+```
+RX Worker:
+  L1キャッシュ検索 (ヘッダー全体ハッシュ)
+  ├─ HIT  → Pipeline Worker (キャッシュパイプライン)
+  └─ MISS → L2キー生成 → LBF検索
+              ├─ LBFヒット → Cache Workerへ (L2検索あり)
+              └─ LBFミス   → Cache Workerへ (L2検索スキップ)
+
+Cache Worker:
+  LBFヒット時のみL2キャッシュ検索
+  ├─ HIT  → Pipeline Worker (キャッシュパイプライン)
+  └─ MISS → Pipeline Worker (フルパイプライン)
+```
 
 ## 関連ファイル
 - `cache/cache.rs`: キャッシュ要素

@@ -16,33 +16,41 @@ pub mod cache_creater; // キャッシュ作成ワーカー
 ```
 [NIC] → [RX] → [Cache] → [Pipeline] → [TX] → [NIC]
                               ↓
-                       [Cache Creator]
+                       [Cache Creater]
 ```
 
 ## 処理フロー
 
-### 1. RX Worker
-- パケット受信
-- パーサー実行
-- L1キャッシュチェック
-- LBFでキャッシュワーカー選択
+### 1. RX Worker (`worker/rx.rs`)
+- パケット受信 (NICからバッチ受信)
+- パーサー実行 (WASM)
+- L1キャッシュチェック (ヘッダー全体ハッシュ)
+  - HIT: Pipeline Workerへ直接転送
+  - MISS: L2キー生成 → LBFでCache Worker選択 → Cache Workerへ転送
 
-### 2. Cache Worker
-- L2キャッシュチェック
-- L3 TSSチェック
-- パイプラインワーカーへ転送
+### 2. Cache Worker (`worker/cache.rs`)
+- LBFヒット時のみL2キャッシュチェック
+  - HIT: Pipeline Workerへ転送 (キャッシュパイプライン)
+  - MISS: Pipeline Workerへ転送 (フルパイプライン)
+- LBFミス時: Pipeline Workerへ転送 (フルパイプライン)
+- ※ L3 TSS検索は現在無効化されている
 
-### 3. Pipeline Worker
-- キャッシュヒット: キャッシュパイプライン実行
-- キャッシュミス: フルパイプライン実行
-- キャッシュ作成ワーカーへ通知
+### 3. Pipeline Worker (`worker/pipeline.rs`)
+- キャッシュヒット: `run_cache_pipeline()` 実行
+- キャッシュミス: `run_pipeline()` 実行
+  - L1キー (ヘッダーコピー) を保存
+  - Cache Createrへキャッシュデータ送信
+- 出力先判定 → TX Workerへ転送
 
-### 4. Cache Creator
-- L1/L2キャッシュ更新
-- LBF更新
+### 4. Cache Creater (`worker/cache_creater.rs`)
+- L1キャッシュ更新 (RX ID + L1ハッシュ)
+- L2キャッシュ更新 (RX ID + Cache ID + L2ハッシュ)
+- LBF更新 (Cache IDのビットをセット)
+- ※ L3キャッシュ登録は現在無効化されている
 
-### 5. TX Worker
-- パケット送信
+### 5. TX Worker (`worker/tx.rs`)
+- Ringからパケット取得
+- NICへパケット送信
 
 ## ワーカー間通信
 - RingバッファでMPMC通信
